@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AAE ENGINE v.2
 
-## Getting Started
+Návrh a bezpečnostní verifikace ambient-air odpařovačů (N₂ / O₂ / Ar).
 
-First, run the development server:
+Port of the standalone `AAE_Engine_v.2.html` calculator into a **Next.js** app with **shadcn/ui**, a pure TypeScript calculation core, and unit tests — ready for Vercel.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Features
+
+| Mode | Purpose |
+|------|---------|
+| **NÁVRH (SIZING)** | Q → required tube count N |
+| **KAPACITA (CAPACITY)** | N → Q_max / actual T_out |
+| **RYCHLOST (VELOCITY)** | Pipe velocity vs. EIGA / inert limits |
+
+- Media: N₂, O₂, Ar  
+- Model: L40 calibration (`U_base`, `k_U`, `η_fin`) + frost SF(t) × SF_RH  
+- Safety: CS brittle limit, O₂ advisory, impingement (EIGA Doc 13), capacity margin  
+- Protocol export (clipboard text)
+
+## Stack
+
+- **Next.js 16** (App Router) · React 19 · TypeScript  
+- **Tailwind CSS v4** · **shadcn/ui**  
+- **Vitest** for the pure math core  
+- Deploy target: **Vercel** (zero config)
+
+## Architecture
+
+```
+src/
+  lib/aae/           # Pure calculation engine (no React)
+    math/            # frost, thermo, velocity, solvers, crosscheck
+    modes/           # SIZING | CAPACITY | VELOCITY
+    calculate.ts     # single entry: calculate(request)
+    __tests__/       # unit tests — foundation for math verification
+  components/
+    calculator/      # UI shell over the engine
+    ui/              # shadcn primitives
+  app/               # Next.js routes
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Math and UI are intentionally separated so equations can be verified later without touching the interface.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Develop
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm install
+pnpm dev          # http://localhost:3000
+pnpm test         # run math unit tests
+pnpm build        # production build (Vercel uses this)
+```
 
-## Learn More
+## Deploy to Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. Push this repo to GitHub/GitLab.
+2. Import the project in [Vercel](https://vercel.com/new).
+3. Framework preset: **Next.js** (auto-detected).
+4. Build command: `pnpm build` · Output: default Next.js.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+No env vars required for the calculator itself.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Math verification (next step)
 
-## Deploy on Vercel
+The engine ports the v.2 HTML formulas 1:1. Planned verification work:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Golden tests vs. known manufacturer L40 points  
+2. Clausius–Clapeyron / LMTD / velocity formulas vs. standards  
+3. Document assumptions in `docs/` once verified  
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Run `pnpm test` after any math change.
+
+## License / disclaimer
+
+Předběžný návrh — finální dimenzování ověřit dle výrobce a projektových standardů.
+Standards referenced: CGA P-56 · EIGA Doc 133 · EIGA Doc 13 / CGA G-4.4 · ASME B31.3.
