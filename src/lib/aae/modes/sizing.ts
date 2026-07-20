@@ -12,6 +12,12 @@ import { fmt } from "../format";
 import { twoZoneBaseline } from "../math/crosscheck";
 import { performanceFactor, sfRH, sfTime, sfTotal } from "../math/frost";
 import {
+  approxCapacityFactor,
+  isSiteClass,
+  resolveSiteAir,
+  SITE_CLASS_LABELS,
+} from "../math/site-airflow";
+import {
   aFinPerMeter,
   finDiameterAuto,
   lmtd,
@@ -29,6 +35,7 @@ import type {
   ModelParams,
   ProcessInputs,
   SafetyCheck,
+  SiteClass,
 } from "../types";
 
 export function runSizing(
@@ -36,14 +43,19 @@ export function runSizing(
   inputs: ProcessInputs,
   model: ModelParams,
 ): CalcResult {
-  const { Q, H, t, Tamb, RH, Pliq, Pgas, Dliq, Dgas, Tout, Tmin } = inputs;
+  const { Q, H, t, Tamb, RH, Pliq, Pgas, Dliq, Dgas, Tout, Tmin, vAir } =
+    inputs;
+  const siteClass: SiteClass = isSiteClass(inputs.siteClass)
+    ? inputs.siteClass
+    : "FREE";
+  const site = resolveSiteAir(Tamb, vAir, siteClass);
   const PabsLiq = PabsFromGauge(Pliq);
   const PabsGas = PabsFromGauge(Pgas);
   const Ts = Tsat(medium, PabsLiq);
   const mDot = (Q * medium.rhoN) / 3600; // kg/s
   const qr = qReq(medium, Q, Tout, Ts); // kW
-  const L = lmtd(Tamb, Ts, Tout); // NaN = "NELZE"
-  const Ueff = uEffective(Tamb, model);
+  const L = lmtd(site.TambEff, Ts, Tout); // NaN = "NELZE" (uses effective air T)
+  const Ueff = uEffective(Tamb, model, site.fU);
   const pf = performanceFactor(t, model);
   const sf = sfTime(t, model);
   const sfrh = sfRH(RH);
@@ -51,6 +63,7 @@ export function runSizing(
   const finMm = finDiameterAuto(Q);
   const afin = aFinPerMeter(finMm, model.finEta);
   const aTube = afin * H;
+  const fCap = approxCapacityFactor(site, Ts, Tout, lmtd);
 
   const feasible = Number.isFinite(L) && Tout > Ts;
   const aDesign = Number.isFinite(L)
@@ -151,6 +164,21 @@ export function runSizing(
     });
   }
 
+  if (!site.isFreeFieldRef) {
+    const fStr =
+      fCap !== null ? `f_Q≈${fmt(fCap, 2)}` : `f_U=${fmt(site.fU, 2)}`;
+    checks.push({
+      level: "WARNING",
+      message: `umístění „${SITE_CLASS_LABELS[siteClass]}“ · v_air=${fmt(site.vAir, 1)} m/s → v_lok=${fmt(site.vLocal, 2)} m/s · ${fStr} (odhad, ne free-field rating)`,
+    });
+  }
+  if (fCap !== null && fCap < 0.7) {
+    checks.push({
+      level: "WARNING",
+      message: `silný derating proudění (f_Q≈${fmt(fCap, 2)}) — zvažte přesun / vyšší H·N nebo site CFD`,
+    });
+  }
+
   const verdict = verdictFromChecks(checks);
   const title = "NÁVRH — Q → počet trubek";
 
@@ -177,6 +205,26 @@ export function runSizing(
         label: "U_eff / SF_total",
         value: `${fmt(Ueff)} / ${fmt(sfTot, 2)}`,
         unit: "W/m²K / –",
+      },
+      {
+        label: "v_air / v_lok",
+        value: `${fmt(site.vAir, 1)} / ${fmt(site.vLocal, 2)}`,
+        unit: "m/s",
+        tone: site.isFreeFieldRef ? "ok" : "warn",
+      },
+      {
+        label: "f_U · f_Q (site)",
+        value:
+          fCap === null
+            ? `${fmt(site.fU, 2)} / —`
+            : `${fmt(site.fU, 2)} / ${fmt(fCap, 2)}`,
+        unit: "–",
+        tone:
+          fCap !== null && fCap < 0.7
+            ? "warn"
+            : site.isFreeFieldRef
+              ? "ok"
+              : "neutral",
       },
       {
         label: "A_design",
@@ -225,21 +273,30 @@ export function runSizing(
       },
       {
         n: 4,
-        text: `LMTD (ΔT₁=${fmt(Tamb - Ts)} K, ΔT₂=${fmt(Tamb - Tout)} K)`,
+        text: `LMTD ze T_air_eff=${fmt(site.TambEff)} °C (φ=${fmt(site.phi, 2)}; ΔT₁=${fmt(site.TambEff - Ts)} K, ΔT₂=${fmt(site.TambEff - Tout)} K)`,
         value: Number.isFinite(L) ? `${fmt(L)} K` : "NELZE",
       },
       {
         n: 5,
-        text: `U_eff = max(4; U_base·(1+k·T_amb)); PF(t)=${fmt(pf, 3)} → SF=${fmt(sf, 2)}, SF_RH=${fmt(sfrh, 2)}`,
-        value: `U_eff ${fmt(Ueff)} W/m²K · SF_total ${fmt(sfTot, 3)}`,
+        text: `Site: ${SITE_CLASS_LABELS[siteClass]} · v_air=${fmt(site.vAir, 1)} → v_lok=${fmt(site.vLocal, 2)} m/s · f_U=(v/v_ref)^0,6=${fmt(site.fU, 3)}`,
+        value:
+          fCap === null
+            ? `f_U ${fmt(site.fU, 3)}`
+            : `f_U ${fmt(site.fU, 3)} · f_Q≈${fmt(fCap, 3)}`,
+        tone: site.isFreeFieldRef ? "ok" : "warn",
       },
       {
         n: 6,
+        text: `U_eff = max(2; U_free·f_U); U_free=max(4; U_base·(1+k·T_amb)); PF(t)=${fmt(pf, 3)} → SF=${fmt(sf, 2)}, SF_RH=${fmt(sfrh, 2)}`,
+        value: `U_eff ${fmt(Ueff)} W/m²K · SF_total ${fmt(sfTot, 3)}`,
+      },
+      {
+        n: 7,
         text: `Ø žebra auto dle Q → ${fmt(finMm, 0)} mm; a_fin = 12·2·((Ø/2−12,7)/1000)·η`,
         value: `a_fin ${fmt(afin, 3)} m²/m · A_tube ${fmt(aTube, 2)} m²`,
       },
       {
-        n: 7,
+        n: 8,
         text: "A_design = Q̇/(U_eff·LMTD)·SF_total; N = ⌈A_design/A_tube⌉",
         value:
           aDesign === null || N === null
@@ -247,8 +304,8 @@ export function runSizing(
             : `${fmt(aDesign)} m² → ${N} ks`,
       },
       {
-        n: 8,
-        text: "Cross-check dvouzónový NTU-ε baseline",
+        n: 9,
+        text: "Cross-check dvouzónový NTU-ε baseline (free-field U, bez site derate)",
         value:
           baseline === null || ratio === null
             ? "NELZE"
@@ -300,6 +357,16 @@ export function runSizing(
               ? "warn"
               : "ok",
       },
+      {
+        n: "✓",
+        text: `Proudění vzduchu (${SITE_CLASS_LABELS[siteClass]})`,
+        value: `v_lok ${fmt(site.vLocal, 2)} m/s · f_U ${fmt(site.fU, 2)}`,
+        tone: site.isFreeFieldRef
+          ? "ok"
+          : fCap !== null && fCap < 0.7
+            ? "warn"
+            : "warn",
+      },
     ],
     protocol: "",
     intermediates: {
@@ -326,6 +393,12 @@ export function runSizing(
       vg,
       vliq,
       vlim,
+      vAir: site.vAir,
+      vLocal: site.vLocal,
+      fU: site.fU,
+      phi: site.phi,
+      TambEff: site.TambEff,
+      fCap,
     },
   };
 
@@ -335,11 +408,12 @@ export function runSizing(
     model,
     verdict,
     bodyLines: [
-      `Vstupy: Q=${Q} Nm³/h · H=${H} m · t=${t} h · T_amb=${Tamb} °C · RH=${RH} % · P_liq=${Pliq} bar g · P_gas=${Pgas} bar g · D_liq/D_gas=${Dliq}/${Dgas} mm · T_out cíl=${Tout} °C`,
-      `T_boil(P_liq)=${fmt(Ts)} °C · Q̇=${fmt(qr)} kW · U_eff=${fmt(Ueff)} W/m²K · SF_total=${fmt(sfTot, 3)} · LMTD=${Number.isFinite(L) ? fmt(L) : "NELZE"} K`,
+      `Vstupy: Q=${Q} Nm³/h · H=${H} m · t=${t} h · T_amb=${Tamb} °C · RH=${RH} % · P_liq=${Pliq} bar g · P_gas=${Pgas} bar g · D_liq/D_gas=${Dliq}/${Dgas} mm · T_out cíl=${Tout} °C · v_air=${fmt(site.vAir, 1)} m/s · site=${siteClass}`,
+      `T_boil(P_liq)=${fmt(Ts)} °C · Q̇=${fmt(qr)} kW · U_eff=${fmt(Ueff)} W/m²K (f_U=${fmt(site.fU, 3)}) · SF_total=${fmt(sfTot, 3)} · LMTD(T_air=${fmt(site.TambEff)})=${Number.isFinite(L) ? fmt(L) : "NELZE"} K · v_lok=${fmt(site.vLocal, 2)} m/s`,
       N === null || aDesign === null
         ? "VÝSLEDEK: NELZE — přenos tepla fyzikálně nemožný"
         : `VÝSLEDEK: N = ${N} trubek × ${H} m, Ø žebra ${finMm} mm (A_design = ${fmt(aDesign)} m²; rezerva +${fmt((reserve ?? 0) * 100)} %) · v_gas ${fmt(vg)} m/s (limit ${fmt(vlim)})`,
+      "Pozn. site airflow: engineering estimate (Lisowski/Rogié/Gunter); free-field EN rating jen při FREE + v_ref.",
     ],
   });
 

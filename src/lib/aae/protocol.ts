@@ -19,7 +19,7 @@ export function buildProtocol(args: {
     "PROTOKOL — AAE ENGINE v.2",
     `Datum: ${new Date().toLocaleString("cs-CZ")}`,
     `Standardy: ${STANDARDS_LINE}`,
-    `Model: U_eff=max(4; U_base·(1+k·T_amb)) (U_base=${args.model.Ubase} W/m²K, k=${args.model.Uk}/K), SF_total = SF(t)·SF_RH, η_fin=${args.model.finEta}`,
+    `Model: U_eff=max(2; U_free·f_U), U_free=max(4; U_base·(1+k·T_amb)) (U_base=${args.model.Ubase} W/m²K, k=${args.model.Uk}/K), f_U=(v_lok/v_ref)^0,6, LMTD(T_air), SF_total = SF(t)·SF_RH, η_fin=${args.model.finEta}`,
     "————————————————————————————————",
     `REŽIM: ${modeLabel}`,
     `Médium: ${args.medium.name}`,

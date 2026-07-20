@@ -21,9 +21,13 @@ import {
   calculate,
   DEFAULT_INPUTS,
   DEFAULT_MODEL,
+  SITE_CLASS_HINTS,
+  SITE_CLASS_LABELS,
+  SITE_CLASSES,
   type CalcMode,
   type ModelParams,
   type ProcessInputs,
+  type SiteClass,
 } from "@/lib/aae";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Settings2 } from "lucide-react";
@@ -38,6 +42,7 @@ import {
 import { ProtocolPanel } from "./protocol-panel";
 import { Stamp } from "./stamp";
 import { StepsList } from "./steps-list";
+import { Label } from "@/components/ui/label";
 
 function showField(mode: CalcMode, modes: CalcMode[]): boolean {
   return modes.includes(mode);
@@ -54,7 +59,10 @@ export function Calculator() {
     [medium, mode, inputs, model],
   );
 
-  function setInput<K extends keyof ProcessInputs>(key: K, value: number) {
+  function setInput<K extends keyof ProcessInputs>(
+    key: K,
+    value: ProcessInputs[K],
+  ) {
     setInputs((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -215,6 +223,49 @@ export function Calculator() {
                   max={100}
                   onChange={(v) => setInput("RH", v)}
                 />
+              )}
+              {showField(mode, ["SIZING", "CAPACITY"]) && (
+                <Field
+                  id="vAir"
+                  label={
+                    <>
+                      v_air <span className="font-normal">[m/s]</span>
+                    </>
+                  }
+                  hint="Volný proud vzduchu / vítr (ref. 1,5 m/s)"
+                  value={inputs.vAir}
+                  step={0.1}
+                  min={0}
+                  max={30}
+                  onChange={(v) => setInput("vAir", v)}
+                />
+              )}
+              {showField(mode, ["SIZING", "CAPACITY"]) && (
+                <div className="col-span-2 grid gap-1.5">
+                  <Label
+                    htmlFor="siteClass"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
+                    Umístění / překážky
+                  </Label>
+                  <select
+                    id="siteClass"
+                    value={inputs.siteClass}
+                    onChange={(e) =>
+                      setInput("siteClass", e.target.value as SiteClass)
+                    }
+                    className="h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm font-medium shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+                  >
+                    {SITE_CLASSES.map((s) => (
+                      <option key={s} value={s}>
+                        {SITE_CLASS_LABELS[s]}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] leading-snug text-muted-foreground/80">
+                    {SITE_CLASS_HINTS[inputs.siteClass]}
+                  </p>
+                </div>
               )}
               {showField(mode, ["SIZING", "CAPACITY", "VELOCITY"]) && (
                 <Field

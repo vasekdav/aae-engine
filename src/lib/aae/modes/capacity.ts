@@ -5,10 +5,17 @@ import {
 } from "../constants";
 import { fmt } from "../format";
 import { sfTotal } from "../math/frost";
+import {
+  approxCapacityFactor,
+  isSiteClass,
+  resolveSiteAir,
+  SITE_CLASS_LABELS,
+} from "../math/site-airflow";
 import { qMax, toutActual } from "../math/solvers";
 import {
   aFinPerMeter,
   finDiameterAuto,
+  lmtd,
   PabsFromGauge,
   qTube,
   Tsat,
@@ -22,6 +29,7 @@ import type {
   ModelParams,
   ProcessInputs,
   SafetyCheck,
+  SiteClass,
 } from "../types";
 
 export function runCapacity(
@@ -29,24 +37,41 @@ export function runCapacity(
   inputs: ProcessInputs,
   model: ModelParams,
 ): CalcResult {
-  const { Q, H, Ninst, t, Tamb, RH, Pgas, Dgas, Tout, Tmin } = inputs;
+  const { Q, H, Ninst, t, Tamb, RH, Pgas, Dgas, Tout, Tmin, vAir } = inputs;
+  const siteClass: SiteClass = isSiteClass(inputs.siteClass)
+    ? inputs.siteClass
+    : "FREE";
+  const site = resolveSiteAir(Tamb, vAir, siteClass);
+  const air = { fU: site.fU, TambAir: site.TambEff };
   const N = Ninst;
   const Pabs = PabsFromGauge(Pgas);
   const Ts = Tsat(medium, Pabs);
   const sfTot = sfTotal(t, RH, model);
   const finMm = finDiameterAuto(Q);
   const afin = aFinPerMeter(finMm, model.finEta);
-  const ta = toutActual(medium, model, afin, Q, N, H, Tamb, sfTot, Ts);
+  const ta = toutActual(medium, model, afin, Q, N, H, Tamb, sfTot, Ts, air);
   const ToutFloor = Math.max(Tmin, Tout, Ts + 0.5);
-  const qm = qMax(medium, model, afin, N, H, Tamb, sfTot, Ts, ToutFloor);
-  const taForVel = ta ?? Math.min(Tout, Tamb - 0.5);
+  const qm = qMax(
+    medium,
+    model,
+    afin,
+    N,
+    H,
+    Tamb,
+    sfTot,
+    Ts,
+    ToutFloor,
+    air,
+  );
+  const taForVel = ta ?? Math.min(Tout, site.TambEff - 0.5, Tamb - 0.5);
   const vg = vGas(Q, Pgas, taForVel, Dgas);
   const vlim = velocityLimit(medium.o2, Pgas, model);
   const installedPower =
     ta !== null
-      ? N * qTube(model, afin, H, Tamb, sfTot, ta, Ts)
+      ? N * qTube(model, afin, H, Tamb, sfTot, ta, Ts, site.fU, site.TambEff)
       : null;
   const util = qm !== null && qm > 0 ? Q / qm : Infinity;
+  const fCap = approxCapacityFactor(site, Ts, ToutFloor, lmtd);
 
   const checks: SafetyCheck[] = [];
 
@@ -54,8 +79,8 @@ export function runCapacity(
     checks.push({
       level: "NOGO",
       message:
-        Tamb <= Ts
-          ? "T_amb ≤ T_sat — nulová hnací síla"
+        site.TambEff <= Ts || Tamb <= Ts
+          ? "T_air / T_amb ≤ T_sat — nulová hnací síla"
           : `instalovaná plocha nestačí na odpaření Q=${fmt(Q, 0)} (dvoufázový výstup)`,
     });
   } else if (ta < Tmin) {
@@ -101,10 +126,25 @@ export function runCapacity(
     });
   }
 
-  if (Tamb <= Ts) {
+  if (site.TambEff <= Ts || Tamb <= Ts) {
     checks.push({
       level: "NOGO",
-      message: "T_amb ≤ T_sat — nulová hnací síla",
+      message: "T_air / T_amb ≤ T_sat — nulová hnací síla",
+    });
+  }
+
+  if (!site.isFreeFieldRef) {
+    const fStr =
+      fCap !== null ? `f_Q≈${fmt(fCap, 2)}` : `f_U=${fmt(site.fU, 2)}`;
+    checks.push({
+      level: "WARNING",
+      message: `umístění „${SITE_CLASS_LABELS[siteClass]}“ · v_air=${fmt(site.vAir, 1)} m/s → v_lok=${fmt(site.vLocal, 2)} m/s · ${fStr} (odhad, ne free-field rating)`,
+    });
+  }
+  if (fCap !== null && fCap < 0.7) {
+    checks.push({
+      level: "WARNING",
+      message: `silný derating proudění (f_Q≈${fmt(fCap, 2)}) — kapacita výrazně pod free-field`,
     });
   }
 
@@ -149,6 +189,26 @@ export function runCapacity(
         tone: qm !== null && util > VELOCITY_NEAR ? "warn" : "ok",
       },
       {
+        label: "v_air / v_lok",
+        value: `${fmt(site.vAir, 1)} / ${fmt(site.vLocal, 2)}`,
+        unit: "m/s",
+        tone: site.isFreeFieldRef ? "ok" : "warn",
+      },
+      {
+        label: "f_U · f_Q (site)",
+        value:
+          fCap === null
+            ? `${fmt(site.fU, 2)} / —`
+            : `${fmt(site.fU, 2)} / ${fmt(fCap, 2)}`,
+        unit: "–",
+        tone:
+          fCap !== null && fCap < 0.7
+            ? "warn"
+            : site.isFreeFieldRef
+              ? "ok"
+              : "neutral",
+      },
+      {
         label: "v_gas",
         value: fmt(vg),
         unit: `m/s (lim ${fmt(vlim)})`,
@@ -163,16 +223,25 @@ export function runCapacity(
       },
       {
         n: 2,
+        text: `Site: ${SITE_CLASS_LABELS[siteClass]} · v_air=${fmt(site.vAir, 1)} → v_lok=${fmt(site.vLocal, 2)} m/s · f_U=${fmt(site.fU, 3)} · T_air=${fmt(site.TambEff)} °C (φ=${fmt(site.phi, 2)})`,
+        value:
+          fCap === null
+            ? `f_U ${fmt(site.fU, 3)}`
+            : `f_U ${fmt(site.fU, 3)} · f_Q≈${fmt(fCap, 3)}`,
+        tone: site.isFreeFieldRef ? "ok" : "warn",
+      },
+      {
+        n: 3,
         text: `Bisekce energetické bilance → skutečná T_out při Q=${fmt(Q, 0)}`,
         value: ta === null ? "NELZE (dvoufázový)" : `${fmt(ta)} °C`,
       },
       {
-        n: 3,
-        text: `Q_max při T_out = ${fmt(ToutFloor)} °C (A_eff·U_eff·LMTD)`,
+        n: 4,
+        text: `Q_max při T_out = ${fmt(ToutFloor)} °C (A_eff·U_eff·LMTD s f_U a T_air)`,
         value: qm === null ? "NELZE" : `${fmt(qm, 0)} Nm³/h`,
       },
       {
-        n: 4,
+        n: 5,
         text: `SF_total (t=${fmt(t)} h, RH=${fmt(RH, 0)} %); Ø žebra auto ${fmt(finMm, 0)} mm`,
         value: `SF ${fmt(sfTot, 3)} · a_fin ${fmt(afin, 3)} m²/m`,
       },
@@ -216,6 +285,16 @@ export function runCapacity(
         value: `${fmt(vg)} / ${fmt(vlim)} m/s`,
         tone: vg > vlim ? "bad" : "ok",
       },
+      {
+        n: "✓",
+        text: `Proudění vzduchu (${SITE_CLASS_LABELS[siteClass]})`,
+        value: `v_lok ${fmt(site.vLocal, 2)} m/s · f_U ${fmt(site.fU, 2)}`,
+        tone: site.isFreeFieldRef
+          ? "ok"
+          : fCap !== null && fCap < 0.7
+            ? "warn"
+            : "warn",
+      },
     ],
     protocol: "",
     intermediates: {
@@ -231,6 +310,12 @@ export function runCapacity(
       util: Number.isFinite(util) ? util : null,
       Pabs,
       N,
+      vAir: site.vAir,
+      vLocal: site.vLocal,
+      fU: site.fU,
+      phi: site.phi,
+      TambEff: site.TambEff,
+      fCap,
     },
   };
 
@@ -240,8 +325,10 @@ export function runCapacity(
     model,
     verdict,
     bodyLines: [
-      `Vstupy: N=${N} ks · Q=${Q} Nm³/h · H=${H} m · t=${t} h · T_amb=${Tamb} °C · RH=${RH} % · P_gas=${Pgas} bar g`,
+      `Vstupy: N=${N} ks · Q=${Q} Nm³/h · H=${H} m · t=${t} h · T_amb=${Tamb} °C · RH=${RH} % · P_gas=${Pgas} bar g · v_air=${fmt(site.vAir, 1)} m/s · site=${siteClass}`,
+      `Site: v_lok=${fmt(site.vLocal, 2)} m/s · f_U=${fmt(site.fU, 3)} · T_air=${fmt(site.TambEff)} °C (φ=${fmt(site.phi, 2)})`,
       `VÝSLEDEK: Q_max=${qm === null ? "NELZE" : `${fmt(qm, 0)} Nm³/h`} · skutečná T_out=${ta === null ? "NELZE" : `${fmt(ta)} °C`} · vytížení ${qm === null ? "—" : `${fmt(util * 100, 0)} %`}`,
+      "Pozn. site airflow: engineering estimate (Lisowski/Rogié/Gunter); free-field EN rating jen při FREE + v_ref.",
     ],
   });
 

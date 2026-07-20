@@ -1,3 +1,4 @@
+import { V_AIR_DEFAULT } from "./math/site-airflow";
 import type { ModelParams, ProcessInputs } from "./types";
 
 /** Universal gas constant [J/(mol·K)] — MODEL C15. */
@@ -38,6 +39,9 @@ export const DEFAULT_INPUTS: ProcessInputs = {
   Tout: -10,
   Tgas: -10,
   Tmin: -20,
+  /** Free-stream design wind; FREE + 1,5 m/s = free-field baseline. */
+  vAir: V_AIR_DEFAULT,
+  siteClass: "FREE",
 };
 
 /** Near-limit velocity ratio for WARNING. */
@@ -67,4 +71,4 @@ export const STANDARDS_LINE =
   "CGA P-56 · EIGA Doc 133 · EIGA Doc 13 / CGA G-4.4 · ASME B31.3";
 
 export const MODEL_LINE =
-  "kalibrace L40 (U_base 7 W/m²K · k 0,007/K · PF křivka námrazy · SF_RH)";
+  "kalibrace L40 (U_base 7 W/m²K · k 0,007/K · PF křivka námrazy · SF_RH · site airflow v^0,6 + φ)";

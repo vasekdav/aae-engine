@@ -44,10 +44,19 @@ export function qReq(
 
 /**
  * Effective overall heat transfer coefficient [W/(m²·K)] — NAVRH C52.
- * U_eff = max(4; U_base·(1 + k·T_amb))
+ * U_free = max(4; U_base·(1 + k·T_amb))
+ * Optional fU multiplies free-field U for site air-velocity derating
+ * (Lisowski / finned-surface h ∝ v^n). Floor after site: max(2; U_free·fU).
+ * @param fU velocity factor [–], default 1 (free field at calibration speed)
  */
-export function uEffective(TambC: number, model: ModelParams): number {
-  return Math.max(4, model.Ubase * (1 + model.Uk * TambC));
+export function uEffective(
+  TambC: number,
+  model: ModelParams,
+  fU = 1,
+): number {
+  const Ufree = Math.max(4, model.Ubase * (1 + model.Uk * TambC));
+  const f = Number.isFinite(fU) && fU > 0 ? fU : 1;
+  return Math.max(2, Ufree * f);
 }
 
 /**
@@ -70,6 +79,11 @@ export function aFinPerMeter(finMm: number, finEta: number): number {
  * Per-tube heat duty at given outlet temperature [kW].
  * q = U_eff · (a_fin·H) · LMTD / SF_total / 1000
  * Returns NaN when LMTD is impossible ("NELZE").
+ *
+ * @param Tamb climate ambient for U(T) [°C]
+ * @param fU site air-velocity factor on U [–]
+ * @param TambAir effective inlet air temperature for LMTD [°C]
+ *        (defaults to Tamb; use lower value when cold plume recirculates)
  */
 export function qTube(
   model: ModelParams,
@@ -79,10 +93,12 @@ export function qTube(
   sfTot: number,
   Tout: number,
   Ts: number,
+  fU = 1,
+  TambAir: number = Tamb,
 ): number {
-  const L = lmtd(Tamb, Ts, Tout);
+  const L = lmtd(TambAir, Ts, Tout);
   if (!Number.isFinite(L)) return NaN;
-  return (uEffective(Tamb, model) * afin * H * L) / sfTot / 1000;
+  return (uEffective(Tamb, model, fU) * afin * H * L) / sfTot / 1000;
 }
 
 /** Absolute pressure from gauge [bar a]. */

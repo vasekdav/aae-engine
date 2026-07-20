@@ -31,6 +31,7 @@ export type {
   ModelParams,
   ProcessInputs,
   SafetyCheck,
+  SiteClass,
   StatusTone,
   Verdict,
   VerdictLevel,
@@ -62,5 +63,19 @@ export {
   vLiq,
 } from "./math/velocity";
 export { qMax, toutActual } from "./math/solvers";
+export {
+  airVelocityFactor,
+  approxCapacityFactor,
+  effectiveAirTemperature,
+  isSiteClass,
+  localAirVelocity,
+  resolveSiteAir,
+  SITE_CLASS_HINTS,
+  SITE_CLASS_LABELS,
+  SITE_CLASSES,
+  V_AIR_DEFAULT,
+  V_AIR_REF,
+} from "./math/site-airflow";
+export type { SiteAirResult } from "./math/site-airflow";
 export { twoZoneBaseline } from "./math/crosscheck";
 export { verdictFromChecks } from "./safety";

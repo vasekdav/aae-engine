@@ -7,6 +7,12 @@ export type MediumId = "N2" | "O2" | "Ar";
 
 export type CalcMode = "SIZING" | "CAPACITY" | "VELOCITY";
 
+/**
+ * Installation site class for ambient-air approach velocity & cold recirculation.
+ * FREE matches free-field catalog ratings when vAir = V_AIR_REF.
+ */
+export type SiteClass = "FREE" | "ONE_WALL" | "COURTYARD" | "WAKE";
+
 export type VerdictLevel = "GO" | "WARNING" | "NOGO";
 
 export type StatusTone = "ok" | "warn" | "bad" | "neutral";
@@ -84,6 +90,16 @@ export interface ProcessInputs {
   Tgas: number;
   /** Brittle-fracture limit for carbon steel [°C]. */
   Tmin: number;
+  /**
+   * Design free-stream air / wind velocity [m/s].
+   * Free-field U_base is calibrated at ~1,5 m/s (V_AIR_REF).
+   */
+  vAir: number;
+  /**
+   * Site class: walls / courtyard / building wake reduce local air speed
+   * and can recirculate cold plume air onto the fins.
+   */
+  siteClass: SiteClass;
 }
 
 export interface CalcRequest {
