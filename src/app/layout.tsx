@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
+import { MediumProvider } from "@/components/calculator/medium-context";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -43,9 +44,11 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col bg-background text-foreground antialiased">
         <TooltipProvider delay={200}>
-          <SiteHeader />
-          {children}
-          <SiteFooter />
+          <MediumProvider>
+            <SiteHeader />
+            {children}
+            <SiteFooter />
+          </MediumProvider>
         </TooltipProvider>
       </body>
     </html>

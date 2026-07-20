@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import {
   Card,
   CardContent,
@@ -16,16 +17,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   calculate,
   DEFAULT_INPUTS,
   DEFAULT_MODEL,
-  MODEL_LINE,
-  STANDARDS_LINE,
   type CalcMode,
-  type MediumId,
   type ModelParams,
   type ProcessInputs,
 } from "@/lib/aae";
@@ -33,29 +29,22 @@ import { cn } from "@/lib/utils";
 import { ChevronDown, Settings2 } from "lucide-react";
 import { Field } from "./field";
 import { KpiGrid } from "./kpi-grid";
+import {
+  getMediumMeta,
+  getModeMeta,
+  MODE_OPTIONS,
+  useMedium,
+} from "./medium-context";
 import { ProtocolPanel } from "./protocol-panel";
 import { Stamp } from "./stamp";
 import { StepsList } from "./steps-list";
-
-const MEDIA_OPTIONS: { id: MediumId; label: string }[] = [
-  { id: "N2", label: "N₂" },
-  { id: "O2", label: "O₂" },
-  { id: "Ar", label: "Ar" },
-];
-
-const MODE_OPTIONS: { id: CalcMode; label: string; description: string }[] = [
-  { id: "SIZING", label: "Návrh", description: "Q → N trubek" },
-  { id: "CAPACITY", label: "Kapacita", description: "N → Q_max / T_out" },
-  { id: "VELOCITY", label: "Rychlost", description: "Check potrubí" },
-];
 
 function showField(mode: CalcMode, modes: CalcMode[]): boolean {
   return modes.includes(mode);
 }
 
 export function Calculator() {
-  const [medium, setMedium] = useState<MediumId>("N2");
-  const [mode, setMode] = useState<CalcMode>("SIZING");
+  const { medium, mode, setMode } = useMedium();
   const [inputs, setInputs] = useState<ProcessInputs>({ ...DEFAULT_INPUTS });
   const [model, setModel] = useState<ModelParams>({ ...DEFAULT_MODEL });
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -73,85 +62,77 @@ export function Calculator() {
     setModel((prev) => ({ ...prev, [key]: value }));
   }
 
-  const modeMeta = MODE_OPTIONS.find((m) => m.id === mode);
+  const modeMeta = getModeMeta(mode);
+  const mediumMeta = getMediumMeta(medium);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      {/* Page intro */}
-      <div className="mb-8 space-y-2">
-        <h1 className="sr-only">AAE Engine</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
-          Návrh a bezpečnostní verifikace ambient-air odpařovačů pro{" "}
-          <span className="text-foreground">{result.mediumName}</span>.
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {STANDARDS_LINE}
-          <span className="mx-1.5 text-border">·</span>
-          {MODEL_LINE}
-        </p>
-      </div>
+      {/* Page intro — medium identity left, calc mode action right */}
+      <header className="mb-6 border-b border-border/60 pb-6">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0 space-y-2">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              Médium
+            </p>
+            <h1 className="flex flex-wrap items-center gap-2.5 text-2xl font-semibold tracking-tight sm:text-3xl">
+              <span>{mediumMeta.name}</span>
+              <Badge
+                variant="secondary"
+                className="h-7 rounded-md px-2.5 font-mono text-sm font-semibold tracking-tight"
+              >
+                {mediumMeta.label}
+              </Badge>
+              {medium === "O2" ? (
+                <Badge
+                  variant="outline"
+                  className="h-7 rounded-md border-amber-500/35 bg-amber-500/8 px-2 text-xs font-medium text-amber-800 dark:text-amber-400"
+                >
+                  O₂ service
+                </Badge>
+              ) : null}
+            </h1>
+            <p className="max-w-xl text-sm text-muted-foreground">
+              Návrh a bezpečnostní verifikace ambient-air odpařovačů
+            </p>
+          </div>
+
+          <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              Režim výpočtu
+            </p>
+            <ButtonGroup aria-label="Režim výpočtu">
+              {MODE_OPTIONS.map((m) => {
+                const selected = mode === m.id;
+                return (
+                  <Button
+                    key={m.id}
+                    variant={selected ? "default" : "outline"}
+                    aria-pressed={selected}
+                    title={m.description}
+                    onClick={() => setMode(m.id)}
+                  >
+                    {m.label}
+                  </Button>
+                );
+              })}
+            </ButtonGroup>
+            <p className="text-[11px] text-muted-foreground sm:text-right">
+              {modeMeta.description}
+            </p>
+          </div>
+        </div>
+      </header>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,22rem)_1fr] xl:grid-cols-[minmax(0,24rem)_1fr]">
-        {/* Inputs */}
+        {/* Inputs — process params; mode is page-header action */}
         <Card className="shadow-none">
           <CardHeader className="border-b">
             <CardTitle>Vstupy</CardTitle>
             <CardDescription>
-              Médium, režim výpočtu a procesní parametry
+              Procesní parametry · {modeMeta.label}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 pt-6">
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Médium</p>
-              <ToggleGroup
-                value={[medium]}
-                onValueChange={(v) => {
-                  const next = v[0] as MediumId | undefined;
-                  if (next) setMedium(next);
-                }}
-                variant="outline"
-                className="grid w-full grid-cols-3"
-              >
-                {MEDIA_OPTIONS.map((m) => (
-                  <ToggleGroupItem
-                    key={m.id}
-                    value={m.id}
-                    className="w-full font-medium"
-                  >
-                    {m.label}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Režim</p>
-              <Tabs
-                value={mode}
-                onValueChange={(v) => setMode(v as CalcMode)}
-                className="w-full"
-              >
-                <TabsList className="grid h-auto w-full grid-cols-3 items-stretch gap-0 p-1 group-data-horizontal/tabs:h-auto">
-                  {MODE_OPTIONS.map((m) => (
-                    <TabsTrigger
-                      key={m.id}
-                      value={m.id}
-                      className="flex h-auto min-h-0 flex-col items-center justify-center gap-0.5 whitespace-normal px-1.5 py-2 text-center data-active:shadow-sm"
-                    >
-                      <span className="text-xs font-medium sm:text-sm">
-                        {m.label}
-                      </span>
-                      <span className="hidden text-[10px] font-normal text-muted-foreground sm:block">
-                        {m.description}
-                      </span>
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
-            </div>
-
-            <Separator />
-
             <div className="grid grid-cols-2 gap-4">
               {showField(mode, ["SIZING", "CAPACITY", "VELOCITY"]) && (
                 <Field
@@ -396,8 +377,8 @@ export function Calculator() {
               <div className="space-y-1">
                 <CardTitle>Výsledek</CardTitle>
                 <CardDescription>
-                  {modeMeta?.label}
-                  {modeMeta ? " — " : null}
+                  {modeMeta.label}
+                  {" — "}
                   {result.title.replace(/^NÁVRH — |^KAPACITA — |^RYCHLOST — /, "")}
                 </CardDescription>
               </div>
