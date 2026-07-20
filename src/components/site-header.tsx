@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
+import { Separator } from "@/components/ui/separator";
 import {
   MEDIA_OPTIONS,
   useMedium,
@@ -19,11 +20,13 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="grid h-14 w-full grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:h-16 sm:px-6 lg:px-8">
         {/* Left — company logo + product name */}
-        <div className="flex min-w-0 items-center justify-start gap-3 sm:gap-4">
+        <div className="flex h-full min-w-0 items-center justify-start gap-3 sm:gap-4">
           <Link
-            href="/"
+            href="https://www.linde.com"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex shrink-0 items-center transition-opacity hover:opacity-80"
-            aria-label="The Linde Group — home"
+            aria-label="The Linde Group — linde.com"
           >
             <Image
               src="/linde-logo.svg"
@@ -34,6 +37,7 @@ export function SiteHeader() {
               className="h-7 w-auto sm:h-8 dark:brightness-0 dark:invert"
             />
           </Link>
+          <Separator orientation="vertical" />
           <p className="truncate text-sm font-semibold tracking-tight sm:text-base">
             Ambient Air Evaporator
           </p>
