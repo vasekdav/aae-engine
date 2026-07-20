@@ -139,12 +139,24 @@ const quick = calculateDefaults({ medium: "O2", mode: "CAPACITY" });
 
 ## Deploy to Vercel
 
-1. Push this repo to GitHub (e.g. `vasekdav/aae-engine`).
-2. Import the project in [Vercel](https://vercel.com/new).
-3. Framework preset: **Next.js** (auto-detected).
-4. Install command: `pnpm install` · Build: `pnpm build`.
+**Production:** [aae-engine-smoky.vercel.app](https://aae-engine-smoky.vercel.app)  
+**Project:** Vercel personal account → `aae-engine` (Next.js · `pnpm install` · `pnpm build`)
 
-No secrets or env vars are required for the calculator itself.
+### Auto-deploy pipeline (GitHub Actions)
+
+Pushes to `main` and pull requests run **lint → test → build**, then deploy via the Vercel CLI:
+
+| Event | Result |
+|-------|--------|
+| Push to `main` | Production deploy |
+| Pull request | Preview deploy + URL comment on the PR |
+| Manual (`workflow_dispatch`) | Same as the matching branch |
+
+Repo secrets (already configured): `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`.
+
+Workflow file: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+
+No app env vars are required for the calculator itself.
 
 ---
 
