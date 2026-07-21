@@ -267,6 +267,19 @@ export function Calculator() {
                   </p>
                 </div>
               )}
+              {showField(mode, ["SIZING", "CAPACITY"]) && (
+                <Field
+                  id="Pliq"
+                  label={
+                    <>
+                      P_liq <span className="font-normal">[bar g]</span>
+                    </>
+                  }
+                  value={inputs.Pliq}
+                  step={0.5}
+                  onChange={(v) => setInput("Pliq", v)}
+                />
+              )}
               {showField(mode, ["SIZING", "CAPACITY", "VELOCITY"]) && (
                 <Field
                   id="Pgas"

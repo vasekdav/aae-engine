@@ -1,6 +1,8 @@
 import {
   O2_ADVISORY_TOUT,
   TMIN_MARGIN_WARN_K,
+  T_RUN_VALID_MAX_H,
+  T_RUN_VALID_MIN_H,
   VELOCITY_NEAR,
 } from "../constants";
 import { fmt } from "../format";
@@ -20,7 +22,7 @@ import {
   qTube,
   Tsat,
 } from "../math/thermo";
-import { velocityLimit, vGas } from "../math/velocity";
+import { velocityLimit, vGas, vLiq } from "../math/velocity";
 import { buildProtocol } from "../protocol";
 import { verdictFromChecks } from "../safety";
 import type {
@@ -37,15 +39,17 @@ export function runCapacity(
   inputs: ProcessInputs,
   model: ModelParams,
 ): CalcResult {
-  const { Q, H, Ninst, t, Tamb, RH, Pgas, Dgas, Tout, Tmin, vAir } = inputs;
+  const { Q, H, Ninst, t, Tamb, RH, Pliq, Pgas, Dliq, Dgas, Tout, Tmin, vAir } =
+    inputs;
   const siteClass: SiteClass = isSiteClass(inputs.siteClass)
     ? inputs.siteClass
     : "FREE";
   const site = resolveSiteAir(Tamb, vAir, siteClass);
   const air = { fU: site.fU, TambAir: site.TambEff };
   const N = Ninst;
-  const Pabs = PabsFromGauge(Pgas);
-  const Ts = Tsat(medium, Pabs);
+  const PabsLiq = PabsFromGauge(Pliq);
+  const PabsGas = PabsFromGauge(Pgas);
+  const Ts = Tsat(medium, PabsLiq); // KAPACITA C28–C30 — var při P_liq
   const sfTot = sfTotal(t, RH, model);
   const finMm = finDiameterAuto(Q);
   const afin = aFinPerMeter(finMm, model.finEta);
@@ -63,8 +67,13 @@ export function runCapacity(
     ToutFloor,
     air,
   );
-  const taForVel = ta ?? Math.min(Tout, site.TambEff - 0.5, Tamb - 0.5);
+  // KAPACITA C73 — kontrola rychlosti při min(T_out cíl; T_out při Q)
+  const taForVel =
+    ta !== null
+      ? Math.min(Tout, ta)
+      : Math.min(Tout, site.TambEff - 0.5, Tamb - 0.5);
   const vg = vGas(Q, Pgas, taForVel, Dgas);
+  const vliq = vLiq(Q, medium.rhoN, medium.rhoLiq, Dliq);
   const vlim = velocityLimit(medium.o2, Pgas, model);
   const installedPower =
     ta !== null
@@ -108,14 +117,11 @@ export function runCapacity(
       message: "Q_max nelze spočítat — LMTD při cílovém T_out neexistuje",
     });
   } else if (Q > qm) {
-    checks.push({
-      level: "NOGO",
-      message: `požadovaný Q ${fmt(Q, 0)} > Q_max ${fmt(qm, 0)} Nm³/h`,
-    });
-  } else if (Q > VELOCITY_NEAR * qm) {
+    // KAPACITA E83 — poddimenzováno pro cílovou T_out (tvrdé NO-GO řeší
+    // dvoufázový výstup / T_min výše)
     checks.push({
       level: "WARNING",
-      message: `Q na ${fmt(util * 100, 0)} % Q_max`,
+      message: `požadovaný Q ${fmt(Q, 0)} > Q_max ${fmt(qm, 0)} Nm³/h při cílové T_out — jednotka poddimenzovaná`,
     });
   }
 
@@ -126,10 +132,29 @@ export function runCapacity(
     });
   }
 
+  if (vliq > model.vLiqLim) {
+    checks.push({
+      level: "WARNING",
+      message: `v_liq ${fmt(vliq, 2)} > ${fmt(model.vLiqLim)} m/s — riziko flashingu`,
+    });
+  }
+
   if (site.TambEff <= Ts || Tamb <= Ts) {
     checks.push({
       level: "NOGO",
       message: "T_air / T_amb ≤ T_sat — nulová hnací síla",
+    });
+  }
+
+  if (t > T_RUN_VALID_MAX_H) {
+    checks.push({
+      level: "WARNING",
+      message: `t ${fmt(t, 0)} h > ${T_RUN_VALID_MAX_H} h — extrapolace frost křivky`,
+    });
+  } else if (t < T_RUN_VALID_MIN_H) {
+    checks.push({
+      level: "WARNING",
+      message: `t ${fmt(t, 1)} h < ${T_RUN_VALID_MIN_H} h — mimo validovaný rozsah křivky (1–30 h)`,
     });
   }
 
@@ -214,11 +239,17 @@ export function runCapacity(
         unit: `m/s (lim ${fmt(vlim)})`,
         tone: vg > vlim ? "bad" : "ok",
       },
+      {
+        label: "v_liq",
+        value: fmt(vliq, 2),
+        unit: `m/s (lim ${fmt(model.vLiqLim)})`,
+        tone: vliq > model.vLiqLim ? "warn" : "ok",
+      },
     ],
     derivation: [
       {
         n: 1,
-        text: `T_sat(P) při ${fmt(Pabs, 2)} bar a`,
+        text: `T_boil(P_liq) Clausius-Clapeyron při ${fmt(PabsLiq, 2)} bar a`,
         value: `${fmt(Ts)} °C`,
       },
       {
@@ -270,20 +301,26 @@ export function runCapacity(
           qm === null
             ? `${fmt(Q, 0)} / NELZE`
             : `${fmt(Q, 0)} / ${fmt(qm, 0)}`,
-        tone:
-          qm === null
-            ? "bad"
-            : Q > qm
-              ? "bad"
-              : Q > VELOCITY_NEAR * qm
-                ? "warn"
-                : "ok",
+        tone: qm === null ? "bad" : Q > qm ? "warn" : "ok",
       },
       {
         n: "✓",
         text: "Rychlost plynu",
         value: `${fmt(vg)} / ${fmt(vlim)} m/s`,
         tone: vg > vlim ? "bad" : "ok",
+      },
+      {
+        n: "✓",
+        text: "Rychlost kapaliny vs. vodítko",
+        value: `${fmt(vliq, 2)} / ${fmt(model.vLiqLim)} m/s`,
+        tone: vliq > model.vLiqLim ? "warn" : "ok",
+      },
+      {
+        n: "✓",
+        text: "Rozsah frost křivky (1–30 h)",
+        value: `${fmt(t)} h`,
+        tone:
+          t > T_RUN_VALID_MAX_H || t < T_RUN_VALID_MIN_H ? "warn" : "ok",
       },
       {
         n: "✓",
@@ -305,10 +342,12 @@ export function runCapacity(
       ta,
       qm,
       vg,
+      vliq,
       vlim,
       installedPower,
       util: Number.isFinite(util) ? util : null,
-      Pabs,
+      PabsLiq,
+      PabsGas,
       N,
       vAir: site.vAir,
       vLocal: site.vLocal,
@@ -325,7 +364,7 @@ export function runCapacity(
     model,
     verdict,
     bodyLines: [
-      `Vstupy: N=${N} ks · Q=${Q} Nm³/h · H=${H} m · t=${t} h · T_amb=${Tamb} °C · RH=${RH} % · P_gas=${Pgas} bar g · v_air=${fmt(site.vAir, 1)} m/s · site=${siteClass}`,
+      `Vstupy: N=${N} ks · Q=${Q} Nm³/h · H=${H} m · t=${t} h · T_amb=${Tamb} °C · RH=${RH} % · P_liq=${Pliq} bar g · P_gas=${Pgas} bar g · D_liq/D_gas=${Dliq}/${Dgas} mm · v_air=${fmt(site.vAir, 1)} m/s · site=${siteClass}`,
       `Site: v_lok=${fmt(site.vLocal, 2)} m/s · f_U=${fmt(site.fU, 3)} · T_air=${fmt(site.TambEff)} °C (φ=${fmt(site.phi, 2)})`,
       `VÝSLEDEK: Q_max=${qm === null ? "NELZE" : `${fmt(qm, 0)} Nm³/h`} · skutečná T_out=${ta === null ? "NELZE" : `${fmt(ta)} °C`} · vytížení ${qm === null ? "—" : `${fmt(util * 100, 0)} %`}`,
       "Pozn. site airflow: engineering estimate (Lisowski/Rogié/Gunter); free-field EN rating jen při FREE + v_ref.",
