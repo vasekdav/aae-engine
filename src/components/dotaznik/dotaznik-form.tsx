@@ -192,6 +192,14 @@ export function DotaznikForm() {
       data.append("pojistovna_foto", files.pojistovna_foto);
     }
     data.append("jazyk_dotazniku", lang);
+    // FormSubmit control fields (ignored by other backends): email subject,
+    // table-formatted body, no captcha interstitial.
+    data.append(
+      "_subject",
+      `Nástupní dotazník – ${values.jmeno.trim()} ${values.prijmeni.trim()}`,
+    );
+    data.append("_template", "table");
+    data.append("_captcha", "false");
 
     setSubmitting(true);
     try {

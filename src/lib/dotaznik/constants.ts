@@ -5,11 +5,15 @@
 
 import type { Translation } from "./translations";
 
-// The form posts multipart/form-data (attachments included) to this endpoint,
-// e.g. a deployed Google Apps Script web app that forwards the data to HR.
-// Configure via env so the URL is not hard-coded in the repository.
+// The form posts multipart/form-data (attachments included) to this endpoint.
+// Default is FormSubmit, which forwards each submission to the HR mailbox
+// below; the first submission triggers a one-time activation email that the
+// mailbox owner must confirm. Override via env to point at a different
+// backend (e.g. a Google Apps Script web app).
+export const HR_EMAIL = "vasekdav@gmail.com";
 export const ENDPOINT_URL =
-  process.env.NEXT_PUBLIC_DOTAZNIK_ENDPOINT_URL ?? "";
+  process.env.NEXT_PUBLIC_DOTAZNIK_ENDPOINT_URL ??
+  `https://formsubmit.co/ajax/${HR_EMAIL}`;
 
 export type OptionKey = keyof Translation;
 
