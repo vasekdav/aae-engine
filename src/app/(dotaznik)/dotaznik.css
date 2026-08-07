@@ -1,0 +1,358 @@
+/* Onboarding questionnaire — ported verbatim from the standalone
+   `registracni_formular` HTML page. This stylesheet is global on purpose:
+   the (dotaznik) route group has its own root layout, so these element
+   selectors never meet the Tailwind-based calculator UI. */
+
+:root {
+  --navy: #1c2b3a;
+  --navy-light: #2d4258;
+  --accent: #2f6f5e;
+  --bg: #eceeea;
+  --card: #ffffff;
+  --border: #d9dcd6;
+  --text: #22282f;
+  --muted: #5b6570;
+  --danger: #b3423a;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+header {
+  background: #ffffff;
+  color: var(--text);
+  padding: 24px 20px;
+  border-bottom: 1px solid var(--border);
+}
+header .inner {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.logo-img {
+  height: 34px;
+  width: auto;
+  display: block;
+}
+.lang-switch {
+  display: flex;
+  gap: 6px;
+}
+.lang-switch button {
+  width: auto;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 5px;
+  background: #fff;
+  color: var(--navy-light);
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.lang-switch button:hover {
+  background: #f0f3f1;
+}
+.lang-switch button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+header h1 {
+  margin: 0 0 6px 0;
+  font-size: 1.5rem;
+  letter-spacing: 0.2px;
+  color: var(--navy);
+}
+header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid #b8beb4;
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(28, 43, 58, 0.06);
+}
+.card h2 {
+  font-size: 1.05rem;
+  margin: 0 0 4px 0;
+  color: var(--navy);
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 8px;
+}
+.card .hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 4px 0 16px 0;
+}
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 600px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}
+.field {
+  margin-bottom: 14px;
+}
+.field.full {
+  grid-column: 1 / -1;
+}
+label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--navy-light);
+}
+label .opt {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="date"],
+select {
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: #fff;
+  color: var(--text);
+  font-family: inherit;
+}
+input:focus,
+select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+input[type="file"] {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: #fafbfa;
+  color: var(--muted);
+  font-family: inherit;
+}
+.field.hidden {
+  display: none;
+}
+.radio-group {
+  display: flex;
+  gap: 18px;
+  padding-top: 6px;
+}
+.radio-group label {
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  margin: 0;
+}
+.consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+}
+.consent input {
+  margin-top: 3px;
+}
+.consent-label {
+  font-weight: 400;
+}
+.box {
+  background: #f0f3f1;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  max-height: 130px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+.box ul {
+  margin: 8px 0 0 18px;
+  padding: 0;
+}
+.error-msg {
+  color: var(--danger);
+  font-size: 0.8rem;
+  margin-top: 4px;
+  display: none;
+}
+.field.invalid input,
+.field.invalid select {
+  border-color: var(--danger);
+}
+.field.invalid .error-msg {
+  display: block;
+}
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 14px 22px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+}
+button:hover {
+  background: #255a4c;
+}
+button:disabled {
+  background: #9fb3ac;
+  cursor: not-allowed;
+}
+.status {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+.status.ok {
+  background: #e5f2ec;
+  color: #1c5c46;
+  border: 1px solid #b8ddc9;
+}
+.status.err {
+  background: #fbeceb;
+  color: var(--danger);
+  border: 1px solid #f0c6c2;
+}
+.success-screen {
+  text-align: center;
+  padding: 40px 20px;
+}
+.success-screen h2 {
+  color: var(--accent);
+  border: none;
+}
+/* --- Recap before submitting --- */
+.recap-note {
+  background: #fff8e6;
+  border: 1px solid #e6d3a3;
+  border-left: 4px solid #d99e2f;
+  border-radius: 6px;
+  padding: 14px 16px;
+  font-size: 0.9rem;
+  color: #6b5518;
+  margin-bottom: 20px;
+}
+.recap-group {
+  margin-bottom: 18px;
+}
+.recap-group h3 {
+  font-size: 0.95rem;
+  color: var(--navy);
+  margin: 0 0 8px 0;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--accent);
+}
+.recap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.recap-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #eceeea;
+  vertical-align: top;
+}
+.recap-table td.k {
+  color: var(--muted);
+  width: 45%;
+}
+.recap-table td.v {
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-word;
+}
+.recap-table td.v.empty {
+  font-weight: 400;
+  color: #9aa3ac;
+  font-style: italic;
+}
+.recap-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.recap-buttons button {
+  flex: 1;
+  min-width: 180px;
+}
+.btn-secondary {
+  background: #fff;
+  color: var(--navy);
+  border: 1px solid #b8beb4;
+}
+.btn-secondary:hover {
+  background: #f0f3f1;
+}
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.78rem;
+  padding-bottom: 30px;
+}
+/* Sub-heading inside a card (permanent / mailing address, original inline styles) */
+.card h3.sub {
+  font-size: 0.95rem;
+  color: var(--navy-light);
+  margin: 18px 0 10px 0;
+}
+.card h3.sub.tight {
+  margin-bottom: 4px;
+}
+.phone-row {
+  display: flex;
+  gap: 8px;
+}
+.phone-row select {
+  flex: 0 0 120px;
+}
+.phone-row input {
+  flex: 1;
+}
