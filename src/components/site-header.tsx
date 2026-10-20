@@ -64,6 +64,12 @@ export function SiteHeader() {
 
         {/* Right — version + design codes this engine implements */}
         <div className="flex min-w-0 items-center justify-end gap-2">
+          <Link
+            href="/dimenzovani"
+            className="hidden text-xs font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline"
+          >
+            AAE Sizing →
+          </Link>
           <Badge
             variant="secondary"
             className="font-mono text-[10px] tracking-wide"

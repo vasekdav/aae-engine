@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "source": "Podklad AAE Sizing App — Návrhový základ; hodnoty k ověření z atestů (EN 10028, EN 10216, ASTM A333)",
+  "items": [
+    { "id": "P235GH", "label": "CS P235GH", "Tlimit_C": -20, "lowTempSensitive": true, "status": "ASSUMED", "note": "typicky −10 až −20 °C dle tloušťky a atestu" },
+    { "id": "P265GH", "label": "CS P265GH", "Tlimit_C": -20, "lowTempSensitive": true, "status": "ASSUMED", "note": "typicky −10 až −20 °C dle tloušťky a atestu" },
+    { "id": "A333_6", "label": "LTCS A333 Gr.6", "Tlimit_C": -45, "lowTempSensitive": true, "status": "ASSUMED", "note": "rázová zkouška při −45 °C" },
+    { "id": "P355NL1", "label": "LTCS P355NL1", "Tlimit_C": -50, "lowTempSensitive": true, "status": "ASSUMED", "note": "jemnozrnná ocel pro nízké teploty" },
+    { "id": "LTCS_V4", "label": "LTCS (Safety Check v4)", "Tlimit_C": -50, "lowTempSensitive": true, "status": "ASSUMED", "note": "hodnota −50 °C ze Safety Check v4 — pravděpodobně LTCS jakost, dohledat" },
+    { "id": "PE", "label": "PE potrubí", "Tlimit_C": -20, "lowTempSensitive": true, "status": "ASSUMED", "note": "polymer — křehne při nízké teplotě" },
+    { "id": "SS", "label": "Nerez 1.4301 / 1.4404", "Tlimit_C": -196, "lowTempSensitive": false, "status": "STANDARD", "note": "austenitická nerez, kryogenní služba" }
+  ]
+}

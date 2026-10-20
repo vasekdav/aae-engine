@@ -1,0 +1,63 @@
+/* AAE Sizing — chart tokens (dark UI) and A4 print theme. */
+.sizing-root,
+.viz {
+  --s1: #3987e5;
+  --s1-soft: color-mix(in oklab, #3987e5 45%, transparent);
+  --s2: #d95926;
+  --s3: #199e70;
+  --good: #3fa66b;
+  --warn: #c98500;
+  --crit: #e66767;
+  --grid: oklch(1 0 0 / 7%);
+  --axis: oklch(1 0 0 / 30%);
+  --ink: var(--foreground);
+  --muted-ink: var(--muted-foreground);
+  --surface: var(--background);
+  --zone-nogo: color-mix(in oklab, #e66767 13%, transparent);
+  --zone-liq: color-mix(in oklab, #3987e5 16%, transparent);
+  --zone-boil: color-mix(in oklab, #199e70 16%, transparent);
+  --zone-sh: color-mix(in oklab, #d95926 11%, transparent);
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm 10mm 10mm;
+  }
+  html.dark {
+    color-scheme: light;
+    --background: #fff;
+    --foreground: #111;
+    --card: #fff;
+    --card-foreground: #111;
+    --popover: #fff;
+    --muted: #f2f2f2;
+    --muted-foreground: #555;
+    --border: #cfcfcf;
+  }
+  .sizing-root,
+  .viz {
+    --s1: #2a78d6;
+    --s1-soft: #86b6ef;
+    --s2: #eb6834;
+    --s3: #1baf7a;
+    --good: #008300;
+    --warn: #b07800;
+    --crit: #c9302c;
+    --grid: #e6e6e6;
+    --axis: #9a9a9a;
+    --zone-nogo: #fbe3e3;
+    --zone-liq: #e3eefb;
+    --zone-boil: #e0f4ec;
+    --zone-sh: #fcebe3;
+  }
+  .sizing-root * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Rule/verdict text colors were tuned for dark; darken them on paper. */
+  .sizing-root .text-emerald-400 { color: #0a6b2e; }
+  .sizing-root .text-amber-400 { color: #8a5a00; }
+  .sizing-root .text-red-400 { color: #b0201c; }
+  .sizing-root .text-muted-foreground { color: #444; }
+}

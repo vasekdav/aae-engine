@@ -1,0 +1,183 @@
+{
+  "version": "1.0.0",
+  "status": "ASSUMED",
+  "source": "Podklad AAE Sizing App, kapitola Umístění — inženýrský odhad do nahrazení měřením z terénu",
+  "presets": [
+    {
+      "id": "FREE",
+      "label": "Volné prostranství",
+      "hint": "Rozestupy ≥ min. LeadVap",
+      "fLoc": 1.0,
+      "dT8": 0,
+      "grows": false,
+      "impact": "NONE",
+      "pictogram": "free"
+    },
+    {
+      "id": "WALL_OK",
+      "label": "U stěny, dostatečný odstup",
+      "hint": "Odstup ≥ max(1 m; 2 m pro H ≥ 5 m) a ≥ 0,2·H",
+      "fLoc": 1.0,
+      "dT8": 1,
+      "grows": false,
+      "impact": "NONE",
+      "pictogram": "wall"
+    },
+    {
+      "id": "WALL_NEAR",
+      "label": "U stěny, odstup 0,5 m až min.",
+      "hint": "Pod rozestupem výrobce",
+      "fLoc": 0.9,
+      "dT8": 2,
+      "grows": false,
+      "impact": "WARNING",
+      "reason": "odstup od stěny pod rozestupem výrobce",
+      "pictogram": "wallNear"
+    },
+    {
+      "id": "WALL_TOUCH",
+      "label": "U stěny, odstup < 0,5 m",
+      "hint": "Nelze odledovat",
+      "fLoc": null,
+      "dT8": null,
+      "grows": false,
+      "impact": "NOGO",
+      "reason": "odstup od stěny < 0,5 m — nelze odledovat",
+      "pictogram": "wallTouch"
+    },
+    {
+      "id": "CORNER",
+      "label": "Roh budovy",
+      "hint": "Oba odstupy v pořádku",
+      "fLoc": 0.95,
+      "dT8": 3,
+      "grows": false,
+      "impact": "NONE",
+      "pictogram": "corner"
+    },
+    {
+      "id": "ALLEY_THROUGH",
+      "label": "Průchozí ulička",
+      "hint": "Mezi budovami, otevřená na obou koncích",
+      "fLoc": 0.95,
+      "dT8": 2,
+      "grows": false,
+      "impact": "NONE",
+      "pictogram": "alley"
+    },
+    {
+      "id": "ALLEY_DEAD",
+      "label": "Slepá ulička / výklenek / dvůr",
+      "hint": "Obestavěno ze 3–4 stran; ΔT roste s dobou provozu",
+      "fLoc": 0.85,
+      "dT8": 6,
+      "grows": true,
+      "impact": "WARNING",
+      "reason": "slepá ulička / dvůr — jezero studeného vzduchu",
+      "pictogram": "court"
+    },
+    {
+      "id": "ROOF_HIGH",
+      "label": "Pod střechou, vysoká",
+      "hint": "Boky otevřené, světlá výška ≥ max(2 m; 0,5·H)",
+      "fLoc": 0.97,
+      "dT8": 1,
+      "grows": false,
+      "impact": "NONE",
+      "pictogram": "roofHigh"
+    },
+    {
+      "id": "ROOF_MID",
+      "label": "Pod střechou, nízká",
+      "hint": "Světlá výška 1 m až max(2 m; 0,5·H)",
+      "fLoc": 0.85,
+      "dT8": 2,
+      "grows": false,
+      "impact": "WARNING",
+      "reason": "nízká světlá výška střechy nad jednotkou",
+      "pictogram": "roofMid"
+    },
+    {
+      "id": "ROOF_LOW",
+      "label": "Pod střechou < 1 m",
+      "hint": "Světlá výška < 1 m",
+      "fLoc": null,
+      "dT8": null,
+      "grows": false,
+      "impact": "NOGO",
+      "reason": "světlá výška střechy < 1 m",
+      "pictogram": "roofLow"
+    },
+    {
+      "id": "SHELTER",
+      "label": "Přístřešek",
+      "hint": "Střecha + 1–2 stěny; ΔT roste s dobou provozu",
+      "fLoc": 0.85,
+      "dT8": 5,
+      "grows": true,
+      "impact": "WARNING",
+      "reason": "přístřešek — omezený přítok i odtok vzduchu",
+      "pictogram": "shelter"
+    },
+    {
+      "id": "PIT",
+      "label": "Jáma / záchytná stěna > 0,3 m",
+      "hint": "Pod úrovní terénu nebo plná obruba",
+      "fLoc": null,
+      "dT8": null,
+      "grows": false,
+      "impact": "NOGO",
+      "reason": "jáma / plná obruba — jezero studeného vzduchu",
+      "pictogram": "pit"
+    },
+    {
+      "id": "ROOM",
+      "label": "Uzavřená místnost",
+      "hint": "Bez nucené ventilace",
+      "fLoc": null,
+      "dT8": null,
+      "grows": false,
+      "impact": "NOGO",
+      "reason": "uzavřená místnost — navíc ODH / obohacení O₂",
+      "pictogram": "room"
+    },
+    {
+      "id": "BATTERY_OK",
+      "label": "Baterie, rozestup ≥ min.",
+      "hint": "+1 K za každou další současně běžící řadu",
+      "fLoc": 1.0,
+      "dT8": 0,
+      "grows": false,
+      "perExtraRowK": 1,
+      "impact": "NONE",
+      "pictogram": "battery"
+    },
+    {
+      "id": "BATTERY_TIGHT",
+      "label": "Baterie, rozestup < min.",
+      "hint": "Pod rozestupem výrobce; +1 K za další řadu",
+      "fLoc": 0.9,
+      "dT8": 2,
+      "grows": false,
+      "perExtraRowK": 1,
+      "impact": "WARNING",
+      "reason": "rozestup v baterii pod minimem výrobce",
+      "pictogram": "batteryTight"
+    },
+    {
+      "id": "CUSTOM",
+      "label": "Vlastní (parametrický)",
+      "hint": "φ, g/H, r/H a odtok u paty zadá uživatel",
+      "fLoc": null,
+      "dT8": null,
+      "grows": true,
+      "impact": "PARAMETRIC",
+      "pictogram": "custom"
+    }
+  ],
+  "parametric": {
+    "kD": { "FREE": 0.5, "RESTRICTED": 1.0, "BLOCKED": null },
+    "fLocMin": 0.5,
+    "enclosedPhi": 0.5
+  }
+}

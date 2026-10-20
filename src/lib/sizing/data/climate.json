@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "status": "ASSUMED",
+  "source": "θe dle ČSN 73 0540-3 / NA k ČSN EN 12831-1; průměrné roční teploty ČHMÚ (zaokrouhleno). Ověřit pro konkrétní závod; 50leté minimum doplnit z ČHMÚ.",
+  "hourlyOffsetK": 3,
+  "safetyOffsetK": 12,
+  "sites": [
+    { "id": "PRAHA", "label": "Praha", "thetaE": -12, "mean": 9.0 },
+    { "id": "BRNO", "label": "Brno", "thetaE": -12, "mean": 9.4 },
+    { "id": "OSTRAVA", "label": "Ostrava", "thetaE": -15, "mean": 8.9 },
+    { "id": "PLZEN", "label": "Plzeň", "thetaE": -12, "mean": 8.4 },
+    { "id": "CB", "label": "České Budějovice", "thetaE": -15, "mean": 8.4 },
+    { "id": "HK", "label": "Hradec Králové", "thetaE": -15, "mean": 8.7 },
+    { "id": "LIBEREC", "label": "Liberec", "thetaE": -18, "mean": 7.6 },
+    { "id": "OLOMOUC", "label": "Olomouc", "thetaE": -15, "mean": 8.9 },
+    { "id": "JIHLAVA", "label": "Jihlava", "thetaE": -15, "mean": 7.4 },
+    { "id": "TRINEC", "label": "Třinec (údolí Olše)", "thetaE": -15, "mean": 8.5, "inversionK": 4 }
+  ]
+}

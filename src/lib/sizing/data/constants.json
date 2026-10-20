@@ -1,0 +1,286 @@
+{
+  "version": "1.0.0",
+  "items": {
+    "U_BASE": {
+      "value": 7,
+      "unit": "W/(m²·K)",
+      "status": "CALIBRATED",
+      "source": "Kalibrace L40, sešit AAE Engine v.2 — MODEL C5",
+      "validity": "T_amb −30…+50 °C, profil L40",
+      "factor": "U_AIR",
+      "covers": "přestup tepla na straně vzduchu (bezvětří)"
+    },
+    "U_K": {
+      "value": 0.007,
+      "unit": "1/K",
+      "status": "CALIBRATED",
+      "source": "Kalibrace L40 — MODEL C6; U = max(4; U_base·(1 + k·T_amb[°C]))",
+      "validity": "T_amb −30…+50 °C",
+      "factor": "U_AIR",
+      "covers": "přestup tepla na straně vzduchu (bezvětří)"
+    },
+    "U_FLOOR": {
+      "value": 4,
+      "unit": "W/(m²·K)",
+      "status": "CALIBRATED",
+      "source": "Sešit — NAVRH C52 (spodní mez U_free)",
+      "validity": "—",
+      "factor": "U_AIR",
+      "covers": "přestup tepla na straně vzduchu (bezvětří)"
+    },
+    "PF_A": {
+      "value": 0.675,
+      "unit": "–",
+      "status": "CALIBRATED",
+      "source": "Křivka námrazy PF(t) = a·e^(b·t) + c — MODEL C7",
+      "validity": "t 1–30 h (sešit), LeadVap ≤ 16 h",
+      "factor": "FROST_TIME",
+      "covers": "růst námrazy s dobou provozu"
+    },
+    "PF_B": {
+      "value": -0.1373,
+      "unit": "1/h",
+      "status": "CALIBRATED",
+      "source": "Křivka námrazy — MODEL C8",
+      "validity": "t 1–30 h",
+      "factor": "FROST_TIME",
+      "covers": "růst námrazy s dobou provozu"
+    },
+    "PF_C": {
+      "value": 0.775,
+      "unit": "–",
+      "status": "CALIBRATED",
+      "source": "Křivka námrazy — MODEL C9",
+      "validity": "t 1–30 h",
+      "factor": "FROST_TIME",
+      "covers": "růst námrazy s dobou provozu"
+    },
+    "SF_RH_MAX": {
+      "value": 0.15,
+      "unit": "–",
+      "status": "CALIBRATED",
+      "source": "Přirážka vlhkosti SF_RH: 1 do RH 70 %, lineárně na 1,15 při 100 % — NAVRH C55",
+      "validity": "RH 0–100 %",
+      "factor": "FROST_RH",
+      "covers": "vliv vlhkosti na námrazu"
+    },
+    "FIN_ETA": {
+      "value": 0.9,
+      "unit": "–",
+      "status": "CALIBRATED",
+      "source": "Účinnost 12paprskové hvězdice — MODEL C10",
+      "validity": "profil L40",
+      "factor": "FIN",
+      "covers": "účinnost žebra"
+    },
+    "FIN_COUNT": {
+      "value": 12,
+      "unit": "ks",
+      "status": "CATALOGUE",
+      "source": "Hvězdicový profil L40 (12 žeber)",
+      "validity": "profil L40",
+      "factor": "FIN",
+      "covers": "účinnost žebra"
+    },
+    "TUBE_R": {
+      "value": 0.0127,
+      "unit": "m",
+      "status": "CATALOGUE",
+      "source": "Poloměr jádra trubky — NAVRH C60 (12,7 mm)",
+      "validity": "profil L40",
+      "factor": "FIN",
+      "covers": "účinnost žebra"
+    },
+    "CAL_T_AMB": {
+      "value": 20,
+      "unit": "°C",
+      "status": "CATALOGUE",
+      "source": "Katalogové podmínky: N₂, +20 °C, 8 h, přístup 15 K",
+      "validity": "—"
+    },
+    "CAL_APPROACH": {
+      "value": 15,
+      "unit": "K",
+      "status": "CATALOGUE",
+      "source": "Katalogové podmínky — přístup T_amb − T_out",
+      "validity": "—"
+    },
+    "CAL_T_H": {
+      "value": 8,
+      "unit": "h",
+      "status": "CATALOGUE",
+      "source": "Katalogové podmínky — doba provozu",
+      "validity": "—"
+    },
+    "CAL_P_BARG": {
+      "value": 10,
+      "unit": "bar(g)",
+      "status": "ASSUMED",
+      "source": "Referenční tlak katalogového bodu (nasycená kapalina na vstupu) — k potvrzení",
+      "validity": "—"
+    },
+    "UNC_U": {
+      "value": 0.1,
+      "unit": "–",
+      "status": "ASSUMED",
+      "source": "Nejistota přestupu tepla ±10 % (nejhorší roh R01)",
+      "validity": "—",
+      "factor": "UNC_U",
+      "covers": "nejistota modelu přestupu tepla"
+    },
+    "UNC_FLOC": {
+      "value": 0.05,
+      "unit": "–",
+      "status": "ASSUMED",
+      "source": "Mez faktoru umístění f_loc ±0,05",
+      "validity": "—",
+      "factor": "UNC_LOC",
+      "covers": "nejistota faktorů umístění"
+    },
+    "UNC_DT": {
+      "value": 0.5,
+      "unit": "–",
+      "status": "ASSUMED",
+      "source": "Mez ΔT_recirc ±50 %",
+      "validity": "—",
+      "factor": "UNC_LOC",
+      "covers": "nejistota faktorů umístění"
+    },
+    "DT_RECIRC_MAX": {
+      "value": 8,
+      "unit": "K",
+      "status": "ASSUMED",
+      "source": "ΔT_max(8 h) parametrického modelu umístění (Rogié 2020: φ 8–28 %)",
+      "validity": "t ≤ 16 h",
+      "factor": "LOC_RECIRC",
+      "covers": "recirkulace studeného vzduchu"
+    },
+    "Q_R02_FACTOR": {
+      "value": 1.2,
+      "unit": "–",
+      "status": "STANDARD",
+      "source": "Podklad, pravidlo R02 — rezerva na kapacitě",
+      "validity": "—"
+    },
+    "MARGIN_MIN": {
+      "value": 3,
+      "unit": "K",
+      "status": "STANDARD",
+      "source": "Podklad — bezpečnostní rezervu nelze nastavit pod 3 K",
+      "validity": "—"
+    },
+    "R03_MIN_APPROACH": {
+      "value": 3,
+      "unit": "K",
+      "status": "STANDARD",
+      "source": "Podklad, pravidlo R03",
+      "validity": "—"
+    },
+    "R10_OFFSET": {
+      "value": 5,
+      "unit": "K",
+      "status": "STANDARD",
+      "source": "Podklad, pravidlo R10",
+      "validity": "—"
+    },
+    "LTPS_ALARM": {
+      "value": 10,
+      "unit": "K",
+      "status": "ASSUMED",
+      "source": "Alarm T_limit + 10 K (návrh k potvrzení, MS-79511)",
+      "validity": "—"
+    },
+    "LTPS_TRIP": {
+      "value": 5,
+      "unit": "K",
+      "status": "ASSUMED",
+      "source": "Vypnutí T_limit + 5 K (návrh k potvrzení, MS-79511)",
+      "validity": "—"
+    },
+    "PSV_FACTOR": {
+      "value": 1.5,
+      "unit": "–",
+      "status": "CATALOGUE",
+      "source": "LeadVap §6 — odpouštěcí kapacita ≥ 1,5 × nominální výkon",
+      "validity": "—"
+    },
+    "V_INERT": {
+      "value": 20,
+      "unit": "m/s",
+      "status": "STANDARD",
+      "source": "Orientační limit pro inerty (MODEL C13)",
+      "validity": "N₂, Ar"
+    },
+    "WIND_SENS": {
+      "value": 0.18,
+      "unit": "1/(m/s)",
+      "status": "ASSUMED",
+      "source": "Lisowski et al., Energies 2024 — +18 % výkonu na 1 m/s; jen citlivost, v návrhu se nepočítá",
+      "validity": "0–3 m/s"
+    },
+    "ICE_SHARE": {
+      "value": 0.3,
+      "unit": "–",
+      "status": "ASSUMED",
+      "source": "Řádový podíl tepla z desublimace vlhkosti při RH 100 % (škálováno RH)",
+      "validity": "řádový odhad"
+    },
+    "L_SUBLIMATION": {
+      "value": 2834000,
+      "unit": "J/kg",
+      "status": "STANDARD",
+      "source": "Skupenské teplo desublimace vody",
+      "validity": "—"
+    },
+    "T_AMB_VALID_MIN": {
+      "value": -30,
+      "unit": "°C",
+      "status": "STANDARD",
+      "source": "Podklad, pravidlo R06",
+      "validity": "—"
+    },
+    "T_AMB_VALID_MAX": {
+      "value": 50,
+      "unit": "°C",
+      "status": "STANDARD",
+      "source": "Podklad, pravidlo R06",
+      "validity": "—"
+    },
+    "O2_ADVISORY": {
+      "value": -15,
+      "unit": "°C",
+      "status": "STANDARD",
+      "source": "O₂ advisory výstupní teploty (sešit NAVRH E92)",
+      "validity": "O₂"
+    },
+    "AMBIENT_HOURS_SIGMA": {
+      "value": 8,
+      "unit": "K",
+      "status": "ASSUMED",
+      "source": "Směrodatná odchylka hodinových teplot (normální rozdělení) — hrubý odhad ročních hodin",
+      "validity": "řádový odhad"
+    }
+  },
+  "series": {
+    "LEADVAP": {
+      "label": "LeadVap (L40)",
+      "PS_barg": 40,
+      "tValid_h": 16,
+      "calibrated": true,
+      "status": "CATALOGUE"
+    },
+    "FAIRVAP": {
+      "label": "FairVap",
+      "PS_barg": 40,
+      "tValid_h": 70,
+      "calibrated": false,
+      "status": "ASSUMED"
+    }
+  },
+  "profiles": [
+    { "id": "F80", "diameter_mm": 80, "label": "Hvězdice Ø80 mm" },
+    { "id": "F127", "diameter_mm": 127, "label": "Hvězdice Ø127 mm" },
+    { "id": "F152", "diameter_mm": 152, "label": "Hvězdice Ø152 mm" },
+    { "id": "F200", "diameter_mm": 200, "label": "Hvězdice Ø200 mm" }
+  ]
+}
