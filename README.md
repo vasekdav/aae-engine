@@ -172,6 +172,25 @@ Run `pnpm test` after any change under `src/lib/aae/`.
 
 ---
 
+---
+
+## AAE Sizing (`/dimenzovani`)
+
+Second app in this repo: sizing and protection of carbon-steel piping downstream of an ambient-air vaporizer (LIN / LOX / LAr), built from the *AAE Sizing App — podklad pro tvorbu aplikace* specification.
+
+| Mode | Czech UI | Input → Output |
+|------|----------|----------------|
+| **A** | Dimenzování | flow + conditions → kW, tube count × height, catalogue-equivalent rating |
+| **B** | Ověření | known unit (N, H, profile) → max flow and T_out |
+| **C** | Bezpečnostní profil | T_out vs. run time, vs. T_amb, T_amb × flow heat map with NO-GO zone |
+| **D** | Porovnání umístění | same case for all 15 siting presets side by side |
+
+- **Core** `src/lib/sizing/` — pure SI `solve(case, constants, props)`; three-zone march (liquid heating / boiling / superheat) with CoolProp tables, anchored to the L40 workbook calibration at the catalogue point (N₂, +20 °C, 8 h, 15 K approach). Separate verdicts **Kapacita** and **Ochrana** (rules R01–R10), trim heater Q_trim, T_amb,crit, LTPS spec. Results carry states (`OK / UNREACHABLE / BREAKTHROUGH / OUT_OF_TABLE / EXTRAPOLATED / INVALID`) instead of NaN; the protocol is generated from the computation.
+- **Data** `src/lib/sizing/data/*.json` — versioned constants with source records (status, source, validity, covered phenomenon; double counting is rejected), siting presets, materials, climate, property tables.
+- **Regenerate data:** `python3 scripts/props/generate_props.py` (property tables) and `python3 scripts/reference/zone_model.py` (independent reference vectors used by Vitest and the in-app self-test). Both need `pip install CoolProp`.
+
+---
+
 ## Disclaimer & license
 
 This tool supports **preliminary design and safety screening** only. It is not a substitute for manufacturer software, PE-stamped calculations, or project-specific codes and materials selection.

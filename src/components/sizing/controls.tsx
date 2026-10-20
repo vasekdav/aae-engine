@@ -242,7 +242,7 @@ export function Segmented<T extends string>({
   size?: "sm" | "md";
 }) {
   return (
-    <div role="radiogroup" aria-label={ariaLabel} className="inline-flex shrink-0 rounded-lg border border-border bg-muted/40 p-0.5">
+    <div role="radiogroup" aria-label={ariaLabel} className="inline-flex max-w-full shrink-0 flex-wrap rounded-lg border border-border bg-muted/40 p-0.5">
       {options.map((o) => {
         const sel = o.value === value;
         return (

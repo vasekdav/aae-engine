@@ -71,7 +71,7 @@ export function SizingApp() {
     <div className="sizing-root">
       <div className="print:hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 px-4 py-2 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2 overflow-x-auto">
             <Segmented
               ariaLabel="Režim"
               size="md"
